@@ -13,7 +13,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/** Owner only (see SecurityConfig): list, create and remove staff accounts. */
 @RestController
 @RequestMapping("/api/staff")
 public class StaffController {
@@ -30,7 +29,6 @@ public class StaffController {
 
     public record StaffRequest(String name, String email, String phone, String password) {}
 
-    /** A small, safe view of a staff account (no password, no orders). */
     public record StaffInfo(String customerId, String name, String email, String phone) {}
 
     @GetMapping
@@ -73,7 +71,6 @@ public class StaffController {
         return ResponseEntity.status(HttpStatus.CREATED).body(toInfo(customers.save(staff)));
     }
 
-    /** Takes staff access away: the person stays as a normal customer, with their orders. */
     @DeleteMapping("/{customerId}")
     public ResponseEntity<?> remove(@PathVariable String customerId) {
 

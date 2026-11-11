@@ -13,7 +13,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** For the owner: create staff accounts and take staff access away again. */
 public class StaffPanel extends JPanel {
 
     private final List<Customer> staff = new ArrayList<>();
@@ -49,7 +48,7 @@ public class StaffPanel extends JPanel {
         load();
     }
 
-    // ---------- layout ----------
+
 
     private JPanel createTablePanel() {
         JPanel panel = new JPanel(new BorderLayout(0, 10));
@@ -113,7 +112,6 @@ public class StaffPanel extends JPanel {
         return row + 2;
     }
 
-    // ---------- loading ----------
 
     private void load() {
         showMessage("Loading staff...", false);
@@ -129,8 +127,6 @@ public class StaffPanel extends JPanel {
             showMessage(staff.isEmpty() ? "No staff accounts yet." : " ", false);
         }, error -> showError(error));
     }
-
-    // ---------- create ----------
 
     private void create() {
         String name = nameField.getText().trim();
@@ -168,7 +164,6 @@ public class StaffPanel extends JPanel {
         });
     }
 
-    // ---------- remove ----------
 
     private void remove() {
         int index = table.getSelectedRow();
@@ -201,7 +196,6 @@ public class StaffPanel extends JPanel {
         });
     }
 
-    // ---------- small helpers ----------
 
     private void setBusy(boolean busy) {
         createButton.setEnabled(!busy);

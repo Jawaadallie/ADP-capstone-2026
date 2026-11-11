@@ -14,10 +14,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** For staff and the owner: add, edit and delete products, and set how many are in stock. */
 public class AdminProductsPanel extends JPanel {
 
-    /** One product together with its stock record. */
     private static class Row {
         Product product;
         Inventory inventory;   // null when the product has no stock record yet
@@ -116,7 +114,6 @@ public class AdminProductsPanel extends JPanel {
         return panel;
     }
 
-    /** Puts a small label and a text box under each other and returns the next free row. */
     private int addField(JPanel panel, GridBagConstraints gbc, int row, String label, JTextField field) {
         gbc.gridy = row;
         gbc.insets = new Insets(8, 0, 0, 0);
@@ -127,7 +124,6 @@ public class AdminProductsPanel extends JPanel {
         return row + 2;
     }
 
-    // ---------- loading ----------
 
     private void load() {
         showMessage("Loading products...", false);
@@ -170,7 +166,6 @@ public class AdminProductsPanel extends JPanel {
         }
     }
 
-    // ---------- the form ----------
 
     private void showSelectedRow() {
         int index = table.getSelectedRow();
@@ -206,7 +201,6 @@ public class AdminProductsPanel extends JPanel {
         deleteButton.setEnabled(false);
     }
 
-    // ---------- add / edit ----------
 
     private void save() {
         String name = nameField.getText().trim();
@@ -272,7 +266,6 @@ public class AdminProductsPanel extends JPanel {
         });
     }
 
-    /** Updates the stock record if the product has one, otherwise creates it. */
     private static void saveStock(String productId, int stock, String warehouse) throws Exception {
         Inventory existing = null;
         try {
@@ -293,7 +286,6 @@ public class AdminProductsPanel extends JPanel {
         }
     }
 
-    // ---------- delete ----------
 
     private void delete() {
         if (selected == null) {
@@ -326,7 +318,6 @@ public class AdminProductsPanel extends JPanel {
         });
     }
 
-    // ---------- small helpers ----------
 
     private void setBusy(boolean busy) {
         saveButton.setEnabled(!busy);

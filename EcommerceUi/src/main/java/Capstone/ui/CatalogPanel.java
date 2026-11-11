@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/** The shop window: a grid of product cards with search, sort and add-to-cart. */
 public class CatalogPanel extends JPanel {
 
     private static final Color[][] PALETTE = {
@@ -107,7 +106,6 @@ public class CatalogPanel extends JPanel {
         return bar;
     }
 
-    // ---------- loading ----------
 
     public void load() {
         status.setText("Loading products...");
@@ -181,7 +179,6 @@ public class CatalogPanel extends JPanel {
         grid.repaint();
     }
 
-    // ---------- drawing the cards ----------
 
     private void render() {
         if (grid.getLayout() instanceof BorderLayout) {
@@ -315,7 +312,6 @@ public class CatalogPanel extends JPanel {
         return banner;
     }
 
-    // ---------- actions ----------
 
     private void addToCart(Item item, JButton button) {
         boolean added = Cart.get().add(item.product, 1, item.stock);

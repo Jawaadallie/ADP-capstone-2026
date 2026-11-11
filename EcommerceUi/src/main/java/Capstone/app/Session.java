@@ -3,7 +3,6 @@ package Capstone.app;
 import Capstone.model.Customer;
 import Capstone.net.Api;
 
-/** Holds the customer who is currently signed in. */
 public final class Session {
 
     private static Customer customer;
@@ -29,7 +28,6 @@ public final class Session {
         return customer == null ? null : customer.getCustomerId();
     }
 
-    /** CUSTOMER, STAFF or OWNER. An account with no role counts as a customer. */
     public static String role() {
         if ( customer  == null || customer.getRole() == null) {
             return "CUSTOMER";

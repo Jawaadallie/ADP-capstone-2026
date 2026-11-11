@@ -2,7 +2,7 @@ package Capstone.model;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
-/** Mirrors the JSON the backend sends for Customer. Unknown fields are ignored. */
+
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Customer {
     private String customerId;

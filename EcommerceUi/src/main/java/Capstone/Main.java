@@ -15,7 +15,6 @@ public class Main {
         });
     }
 
-    /** Shows the sign-in window, then the shop. Also used again after signing out. */
     public static void start() {
         LoginDialog login = new LoginDialog();
         login.setVisible(true);

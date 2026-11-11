@@ -14,11 +14,6 @@ import za.ca.cput.commerce.repository.ProductRepository;
 
 import java.util.List;
 import java.util.Optional;
-
-/**
- * Loads demo data for the Legendary Sprays store on start-up so the app is usable
- * straight away. It is safe to run many times: it only adds what is missing.
- */
 @Component
 public class DataSeeder implements CommandLineRunner {
 

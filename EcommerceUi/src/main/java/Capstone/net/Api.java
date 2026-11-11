@@ -17,10 +17,7 @@ import java.util.Base64;
 import java.util.concurrent.Callable;
 import java.util.function.Consumer;
 
-/**
- * One place for every call to the Spring Boot backend.
- * Checks the HTTP status, turns JSON into model objects and gives clear error messages.
- */
+
 public final class Api {
 
     public static final String BASE = "http://localhost:8080/api";
@@ -43,7 +40,6 @@ public final class Api {
 
     private Api() {}
 
-    /** Thrown when the server answers with an error status or cannot be reached. */
     public static class ApiException extends Exception {
         private final int status;
 
@@ -57,9 +53,7 @@ public final class Api {
         }
     }
 
-    // ---------- sign in / sign out ----------
 
-    /** Use this email + password for every request from now on. */
     public static void setCredentials(String email, String password) {
         String login = email.trim().toLowerCase() + ":" + password;
         authHeader = "Basic " + Base64.getEncoder()
@@ -67,13 +61,11 @@ public final class Api {
         client = newClient();
     }
 
-    /** Forget the password and the server session. */
+
     public static void clearCredentials() {
         authHeader = null;
         client = newClient();
     }
-
-    // ---------- typed helpers ----------
 
     public static <T> T get(String path, Class<T> type) throws Exception {
         return read(send("GET", path, null), type);
@@ -110,7 +102,6 @@ public final class Api {
         return MAPPER.readValue(body, type);
     }
 
-    // ---------- core request ----------
 
     public static String send(String method, String path, Object payload) throws Exception {
 
@@ -145,7 +136,6 @@ public final class Api {
         return response.body();
     }
 
-    /** The backend sends {"message": "..."} for problems the customer can fix (bad password, email taken). */
     private static String serverMessage(String body) {
         try {
             if (body == null || body.isBlank()) {
@@ -175,7 +165,7 @@ public final class Api {
         }
     }
 
-    // ---------- run work off the screen thread ----------
+
 
     public static <T> void async(Callable<T> work, Consumer<T> onSuccess, Consumer<Throwable> onError) {
         new SwingWorker<T, Void>() {

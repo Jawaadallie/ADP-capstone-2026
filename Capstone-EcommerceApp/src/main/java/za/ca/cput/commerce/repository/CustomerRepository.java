@@ -25,7 +25,6 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
 
     boolean existsByEmailIgnoreCase(String email);
 
-    /** Sets only the password hash, so nothing else on the customer is touched. */
     @Transactional
     @Modifying
     @Query("update Customer c set c.passwordHash = :hash where c.customerId = :id")
@@ -33,7 +32,6 @@ public interface CustomerRepository extends JpaRepository<Customer, String> {
 
     List<Customer> findByRole(Role role);
 
-    /** Sets only the role, so the customer's orders and addresses are not touched. */
     @Transactional
     @Modifying
     @Query("update Customer c set c.role = :role where c.customerId = :id")

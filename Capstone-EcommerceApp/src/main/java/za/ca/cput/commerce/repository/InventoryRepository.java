@@ -22,13 +22,11 @@ public interface InventoryRepository extends JpaRepository<Inventory, String> {
 
     boolean existsByProduct(Product product);
 
-    /** Adds stock back for a product (used when an order is canceled). */
     @Transactional
     @Modifying
     @Query("update Inventory i set i.stockQuantity = i.stockQuantity + :quantity where i.product.productId = :productId")
     int addStock(@Param("productId") String productId, @Param("quantity") int quantity);
 
-    /** Takes stock out for an order. Changes nothing (returns 0) if there is not enough stock. */
     @Transactional
     @Modifying
     @Query("update Inventory i set i.stockQuantity = i.stockQuantity - :quantity where i.product.productId = :productId and i.stockQuantity >= :quantity")

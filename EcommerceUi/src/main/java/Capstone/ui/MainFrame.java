@@ -8,7 +8,6 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
 
-/** The main window: shop, orders, reviews and account, with the cart in the header. */
 public class MainFrame extends JFrame {
 
     private static final int TAB_SHOP = 0;

@@ -15,11 +15,7 @@ import za.ca.cput.commerce.repository.ShipmentRepository;
 
 import java.time.LocalDateTime;
 
-/**
- * Cancels an order that is still being processed: the items go back into stock,
- * the shipment is marked CANCELLED, the invoice REFUNDED, and the customer is told.
- * Everything happens in one transaction, so it either all happens or none of it does.
- */
+
 @Service
 public class OrderCancellationService {
 

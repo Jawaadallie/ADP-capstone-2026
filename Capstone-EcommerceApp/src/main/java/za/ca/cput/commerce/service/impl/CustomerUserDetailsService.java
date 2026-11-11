@@ -8,10 +8,7 @@ import org.springframework.stereotype.Service;
 import za.ca.cput.commerce.domain.Customer;
 import za.ca.cput.commerce.repository.CustomerRepository;
 
-/**
- * Lets Spring Security check a login against the customer table.
- * The "username" is the customer's email and the password is compared with the stored BCrypt hash.
- */
+
 @Service
 public class CustomerUserDetailsService implements UserDetailsService {
 

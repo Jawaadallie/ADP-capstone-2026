@@ -3,7 +3,6 @@ package Capstone.model;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.time.LocalDateTime;
 
-/** Mirrors the JSON the backend sends for Notification. Unknown fields are ignored. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Notification {
     private String notificationId;

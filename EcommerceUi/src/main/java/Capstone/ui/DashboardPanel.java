@@ -10,7 +10,6 @@ import java.awt.*;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 
-/** For the owner: sales numbers, best sellers, recent orders and low stock. */
 public class DashboardPanel extends JPanel {
 
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm");
@@ -44,7 +43,7 @@ public class DashboardPanel extends JPanel {
         load();
     }
 
-    // ---------- layout ----------
+
 
     private JPanel createHeader() {
         JPanel header = new JPanel(new BorderLayout(12, 0));
@@ -91,7 +90,6 @@ public class DashboardPanel extends JPanel {
         return Theme.label("-", Font.BOLD, 26f, Theme.PRIMARY_DARK);
     }
 
-    /** A heading with a table under it. The widths set how wide each column is, relative to the others. */
     private JPanel tableCard(String title, DefaultTableModel model, int... widths) {
         JTable table = Theme.table(model);
         for (int i = 0; i < widths.length; i++) {
@@ -105,7 +103,6 @@ public class DashboardPanel extends JPanel {
         return card;
     }
 
-    // ---------- loading ----------
 
     private void load() {
         refreshButton.setEnabled(false);
@@ -121,7 +118,6 @@ public class DashboardPanel extends JPanel {
         });
     }
 
-    /** Puts the numbers from the backend into the cards and tables. */
     void show(JsonNode data) {
         JsonNode summary = data.path("summary");
         salesStat.setText(Theme.money(summary.path("totalSales").asDouble()));

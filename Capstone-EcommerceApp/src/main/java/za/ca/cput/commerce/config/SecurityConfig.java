@@ -9,10 +9,6 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.http.HttpMethod;
 
-/**
- * Every endpoint needs a signed-in customer (email + password, HTTP Basic) except registration.
- * Passwords are checked against BCrypt hashes in the customer table by CustomerUserDetailsService.
- */
 @Configuration
 public class SecurityConfig {
 

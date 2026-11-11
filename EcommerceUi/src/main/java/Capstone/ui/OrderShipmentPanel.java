@@ -20,7 +20,6 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-/** My Orders: the customer's orders with items, totals and live shipment tracking. */
 public class OrderShipmentPanel extends JPanel {
 
     private static final String[] STAGES = {"PROCESSING", "SHIPPED", "DELIVERED"};
@@ -102,7 +101,6 @@ public class OrderShipmentPanel extends JPanel {
         return label;
     }
 
-    // ---------- layout ----------
 
     private JComponent createListCard() {
         Theme.RoundedPanel card = new Theme.RoundedPanel(16);
@@ -175,8 +173,6 @@ public class OrderShipmentPanel extends JPanel {
         return box;
     }
 
-    // ---------- loading ----------
-
     private void load(String reselectId) {
         emptyState.setText("Loading your orders...");
         Api.async(() -> Api.get("/orders/customer/" + Session.customerId(),
@@ -221,7 +217,6 @@ public class OrderShipmentPanel extends JPanel {
         ordersTable.setRowSelectionInterval(row, row);
     }
 
-    // ---------- showing one order ----------
 
     private void showSelected() {
         int row = ordersTable.getSelectedRow();
@@ -300,7 +295,6 @@ public class OrderShipmentPanel extends JPanel {
         cancelOrder.setVisible(false);
     }
 
-    // ---------- moving the shipment along (demo of PUT /api/shipments) ----------
 
     private void advanceShipment() {
         if (selected == null || selected.getShipment() == null) {
@@ -331,7 +325,6 @@ public class OrderShipmentPanel extends JPanel {
                 });
     }
 
-    // ---------- cancelling an order ----------
 
     private void cancelSelected() {
         if (selected == null) {
@@ -359,7 +352,6 @@ public class OrderShipmentPanel extends JPanel {
         });
     }
 
-    // ---------- helpers ----------
 
     private static String shortId(Order order) {
         String id = order.getOrderId() == null ? "" : order.getOrderId();
@@ -408,7 +400,6 @@ public class OrderShipmentPanel extends JPanel {
         };
     }
 
-    // ---------- the three-step tracker ----------
 
     private static final class TrackerPanel extends JPanel {
         private int stage = -1;

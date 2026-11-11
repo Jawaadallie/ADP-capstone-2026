@@ -17,7 +17,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** Owner only (see SecurityConfig): the numbers shown on the Sales Dashboard. */
 @RestController
 @RequestMapping("/api/dashboard")
 public class DashboardController {

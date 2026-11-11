@@ -5,7 +5,6 @@ import Capstone.model.Product;
 import java.util.ArrayList;
 import java.util.List;
 
-/** The shopping cart. The screens listen to it so the cart count stays up to date. */
 public final class Cart {
 
     public static final double VAT_RATE = 0.15;
@@ -50,7 +49,6 @@ public final class Cart {
         }
     }
 
-    /** @return false when the stock limit stops the item being added */
     public boolean add(Product product, int quantity, int stock) {
         for (Line line : lines) {
             if (line.product.getProductId().equals(product.getProductId())) {

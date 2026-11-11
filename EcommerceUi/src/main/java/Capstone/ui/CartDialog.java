@@ -5,59 +5,68 @@ import Capstone.app.Cart;
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
-/** Shows the cart, lets the customer change quantities, and leads to checkout. */
 public class CartDialog extends JDialog {
 
     private final Cart cart = Cart.get();
     private final JPanel rows = new JPanel();
     private final JPanel totals = new JPanel(new GridLayout(0, 2, 6, 6));
-    private final JLabel notice = Theme.label(" ", Font.PLAIN, 13f, Theme.WARN);
-    private final JButton checkout = Theme.accent("Checkout");
+    private final JLabel notice = new JLabel(" ");
+    private final JButton checkout = new JButton("Checkout");
     private boolean checkoutRequested = false;
 
     public CartDialog(JFrame owner) {
         super(owner, "Your cart", true);
 
         JPanel root = new JPanel(new BorderLayout(0, 12));
-        root.setBackground(Theme.BG);
-        root.setBorder(new EmptyBorder(18, 20, 16, 20));
+        root.setBorder(BorderFactory.createEmptyBorder(18, 20, 16, 20));
 
-        root.add(Theme.title("Your cart"), BorderLayout.NORTH);
+        JLabel title = new JLabel("Your cart");
+        title.setFont(new Font("Segoe UI", Font.BOLD, 22));
+        root.add(title, BorderLayout.NORTH);
 
+        // the wrapper keeps the rows at the top instead of stretching them
         rows.setLayout(new BoxLayout(rows, BoxLayout.Y_AXIS));
-        rows.setOpaque(false);
-        JPanel rowsWrapper = new Theme.ViewportPanel(new BorderLayout());
+        JPanel rowsWrapper = new JPanel(new BorderLayout());
         rowsWrapper.add(rows, BorderLayout.NORTH);
         JScrollPane scroll = new JScrollPane(rowsWrapper);
-        scroll.setBorder(null);
-        scroll.setOpaque(false);
-        scroll.getViewport().setOpaque(false);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
         root.add(scroll, BorderLayout.CENTER);
 
-        JPanel south = new JPanel(new BorderLayout(0, 10));
-        south.setOpaque(false);
+        notice.setForeground(Color.ORANGE.darker());
 
-        Theme.RoundedPanel totalsCard = new Theme.RoundedPanel(14);
-        totalsCard.setLayout(new BorderLayout());
-        totals.setOpaque(false);
-        totalsCard.add(totals, BorderLayout.CENTER);
-        south.add(totalsCard, BorderLayout.NORTH);
+        JPanel south = new JPanel(new BorderLayout(0, 10));
+        south.add(totals, BorderLayout.NORTH);
         south.add(notice, BorderLayout.CENTER);
 
+        JButton keepShopping = new JButton("Continue shopping");
+        keepShopping.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dispose();
+            }
+        });
+
+        JButton clear = new JButton("Empty cart");
+        clear.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cart.clear();
+                refresh();
+            }
+        });
+
+        checkout.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                checkoutRequested = true;
+                dispose();
+            }
+        });
+
         JPanel buttons = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        buttons.setOpaque(false);
-        JButton keepShopping = Theme.ghost("Continue shopping");
-        keepShopping.addActionListener(e -> dispose());
-        JButton clear = Theme.ghost("Empty cart");
-        clear.addActionListener(e -> {
-            cart.clear();
-            refresh();
-        });
-        checkout.addActionListener(e -> {
-            checkoutRequested = true;
-            dispose();
-        });
         buttons.add(clear);
         buttons.add(keepShopping);
         buttons.add(checkout);
@@ -74,16 +83,16 @@ public class CartDialog extends JDialog {
         return checkoutRequested;
     }
 
+
+    private String money(double value) {
+        return "R " + String.format("%.2f", value);
+    }
+
     private void refresh() {
         rows.removeAll();
 
         if (cart.isEmpty()) {
-            JPanel empty = new JPanel(new BorderLayout());
-            empty.setOpaque(false);
-            empty.setBorder(new EmptyBorder(40, 0, 40, 0));
-            JLabel text = Theme.muted("Your cart is empty. Add some sprays from the Shop tab.");
-            text.setHorizontalAlignment(SwingConstants.CENTER);
-            empty.add(text, BorderLayout.CENTER);
+            JLabel empty = new JLabel("Your cart is empty. Add some sprays from the Shop tab.");
             rows.add(empty);
         }
 
@@ -92,84 +101,98 @@ public class CartDialog extends JDialog {
             rows.add(Box.createVerticalStrut(8));
         }
 
+        String deliveryText = money(cart.shipping());
+        if (cart.shipping() == 0 && !cart.isEmpty()) {
+            deliveryText = "Free";
+        }
+
         totals.removeAll();
-        addTotal("Subtotal", Theme.money(cart.subtotal()), false);
-        addTotal("VAT (15%)", Theme.money(cart.vat()), false);
-        String shipping = cart.shipping() == 0 && !cart.isEmpty()
-                ? "Free" : Theme.money(cart.shipping());
-        addTotal("Delivery", shipping, false);
-        addTotal("Total", Theme.money(cart.total()), true);
+        addTotal("Subtotal", money(cart.subtotal()));
+        addTotal("VAT (15%)", money(cart.vat()));
+        addTotal("Delivery", deliveryText);
+        addTotal("Total", money(cart.total()));
 
         double toFree = Cart.FREE_SHIPPING_FROM - cart.subtotal();
         if (!cart.isEmpty() && toFree > 0) {
-            notice.setForeground(Theme.WARN);
-            notice.setText("Spend " + Theme.money(toFree) + " more for free delivery.");
+            notice.setText("Spend " + money(toFree) + " more for free delivery.");
         } else {
             notice.setText(" ");
         }
 
         checkout.setEnabled(!cart.isEmpty());
+
         rows.revalidate();
         rows.repaint();
         totals.revalidate();
         totals.repaint();
     }
 
-    private void addTotal(String label, String value, boolean bold) {
-        JLabel left = Theme.label(label, bold ? Font.BOLD : Font.PLAIN, bold ? 17f : 14f,
-                bold ? Theme.TEXT : Theme.MUTED);
-        JLabel right = Theme.label(value, bold ? Font.BOLD : Font.PLAIN, bold ? 17f : 14f, Theme.TEXT);
+    private void addTotal(String label, String value) {
+        JLabel right = new JLabel(value);
         right.setHorizontalAlignment(SwingConstants.RIGHT);
-        totals.add(left);
+        totals.add(new JLabel(label));
         totals.add(right);
     }
 
-    private JPanel createRow(Cart.Line line) {
-        Theme.RoundedPanel row = new Theme.RoundedPanel(14);
-        row.setLayout(new BorderLayout(12, 0));
-        row.setBorder(new EmptyBorder(10, 14, 10, 14));
+
+    private JPanel createRow(final Cart.Line line) {
+        JPanel row = new JPanel(new BorderLayout(12, 0));
+        row.setBorder(BorderFactory.createCompoundBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY),
+                BorderFactory.createEmptyBorder(10, 14, 10, 14)));
         row.setMaximumSize(new Dimension(Integer.MAX_VALUE, 70));
 
+        // name and price each (middle)
         JPanel info = new JPanel(new GridLayout(0, 1));
-        info.setOpaque(false);
-        info.add(Theme.label(line.getProduct().getProductName(), Font.BOLD, 15f, Theme.TEXT));
-        info.add(Theme.muted(Theme.money(line.getProduct().getCurrentPrice()) + " each"));
+        info.add(new JLabel(line.getProduct().getProductName()));
+        info.add(new JLabel(money(line.getProduct().getCurrentPrice()) + " each"));
         row.add(info, BorderLayout.CENTER);
 
-        JPanel qty = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
-        qty.setOpaque(false);
-        JButton minus = Theme.ghost("-");
-        JButton plus = Theme.ghost("+");
-        minus.setBorder(new EmptyBorder(6, 12, 6, 12));
-        plus.setBorder(new EmptyBorder(6, 12, 6, 12));
-        minus.addActionListener(e -> {
-            cart.setQuantity(line, line.getQuantity() - 1);
-            refresh();
-        });
-        plus.addActionListener(e -> {
-            if (!cart.setQuantity(line, line.getQuantity() + 1)) {
-                notice.setForeground(Theme.WARN);
-                notice.setText("Only " + line.getMaxStock() + " of "
-                        + line.getProduct().getProductName() + " in stock.");
-            } else {
+        // - 2 + buttons (left)
+        JButton minus = new JButton("-");
+        minus.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cart.setQuantity(line, line.getQuantity() - 1);
                 refresh();
             }
         });
+
+        JButton plus = new JButton("+");
+        plus.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean worked = cart.setQuantity(line, line.getQuantity() + 1);
+                if (worked) {
+                    refresh();
+                } else {
+                    notice.setText("Only " + line.getMaxStock() + " of "
+                            + line.getProduct().getProductName() + " in stock.");
+                }
+            }
+        });
+
+        JPanel qty = new JPanel(new FlowLayout(FlowLayout.CENTER, 6, 0));
         qty.add(minus);
-        qty.add(Theme.label(String.valueOf(line.getQuantity()), Font.BOLD, 15f, Theme.TEXT));
+        qty.add(new JLabel(String.valueOf(line.getQuantity())));
         qty.add(plus);
         row.add(qty, BorderLayout.WEST);
 
-        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
-        right.setOpaque(false);
-        right.add(Theme.label(Theme.money(line.getLineTotal()), Font.BOLD, 15f, Theme.PRIMARY_DARK));
-        JButton remove = Theme.ghost("Remove");
-        remove.addActionListener(e -> {
-            cart.remove(line);
-            refresh();
+        // line total and remove button (right)
+        JButton remove = new JButton("Remove");
+        remove.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                cart.remove(line);
+                refresh();
+            }
         });
+
+        JPanel right = new JPanel(new FlowLayout(FlowLayout.RIGHT, 10, 0));
+        right.add(new JLabel(money(line.getLineTotal())));
         right.add(remove);
         row.add(right, BorderLayout.EAST);
+
         return row;
     }
 }

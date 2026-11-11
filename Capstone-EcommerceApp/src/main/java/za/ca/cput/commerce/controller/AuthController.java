@@ -13,12 +13,7 @@ import java.security.Principal;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-/**
- * Registration and "who am I" for signed-in customers.
- *
- * Signing in is done with HTTP Basic (email + password) on every request; Spring Security checks
- * it against the stored BCrypt hash (see SecurityConfig and CustomerUserDetailsService).
- */
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -37,7 +32,6 @@ public class AuthController {
 
     public record RegisterRequest(String name, String email, String phone, String password) {}
 
-    /** Open to everyone: creates an account with a hashed password. */
     @PostMapping("/register")
     public ResponseEntity<?> register(@RequestBody RegisterRequest request) {
 
@@ -75,7 +69,6 @@ public class AuthController {
         }
     }
 
-    /** Needs a valid email + password. Returns the signed-in customer, so the app can confirm a login. */
     @GetMapping("/me")
     public ResponseEntity<Customer> me(Principal principal) {
         return customers.findByEmailIgnoreCase(principal.getName())

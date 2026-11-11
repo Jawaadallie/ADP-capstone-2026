@@ -5,7 +5,6 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
-/** Mirrors the JSON the backend sends for Order. Unknown fields are ignored. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class Order {
     private String orderId;

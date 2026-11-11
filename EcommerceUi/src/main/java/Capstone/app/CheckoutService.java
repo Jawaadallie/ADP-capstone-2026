@@ -12,11 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
 
-/**
- * Places a real order by calling the backend in the right order:
- * order, order items, card, payment, invoice, shipment, then stock levels.
- * If a step fails, the order is removed again so nothing half-finished is left behind.
- */
 public final class CheckoutService {
 
     public record Delivery(String street, String city, String province,

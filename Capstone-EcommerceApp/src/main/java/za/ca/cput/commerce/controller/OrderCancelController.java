@@ -21,7 +21,6 @@ public class OrderCancelController {
         this.cancellation = cancellation;
     }
 
-    /** The signed-in customer cancels one of their own orders. */
     @PutMapping("/{orderId}/cancel")
     public ResponseEntity<?> cancel(@PathVariable String orderId, Principal principal) {
 

@@ -8,251 +8,624 @@ import com.fasterxml.jackson.core.type.TypeReference;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
-/** Reviews: read what others think of a product and add your own rating. */
 public class ReviewPanel extends JPanel {
 
-    private static final DateTimeFormatter DATE = DateTimeFormatter.ofPattern("d MMM yyyy");
+    // Stores the actual Product objects retrieved from the backend.
+    // The position of each Product matches its name in productNames.
+    private final List<Product> products = new ArrayList<Product>();
 
-    private final DefaultListModel<Product> productModel = new DefaultListModel<>();
-    private final JList<Product> productList = new JList<>(productModel);
+    // Stores the product names displayed in the JList.
+    private final DefaultListModel<String> productNames =
+            new DefaultListModel<String>();
 
-    private final JLabel productTitle = Theme.title("Choose a product");
-    private final JLabel summary = Theme.muted(" ");
+    // Displays the list of available products.
+    // It uses productNames as its data model.
+    private final JList<String> productList =
+            new JList<String>(productNames);
+
+    // Displays the name of the currently selected product.
+    private final JLabel productTitle = new JLabel("Choose a product");
+
+    // Displays the average rating and number of reviews.
+    private final JLabel summary = new JLabel(" ");
+
+    // Container that holds all the individual product reviews.
     private final JPanel reviewsBox = new JPanel();
 
-    private final JComboBox<Integer> rating = new JComboBox<>(new Integer[]{5, 4, 3, 2, 1});
+    // Allows the customer to select a rating between 1 and 5.
+    private final JComboBox<Integer> rating =
+            new JComboBox<Integer>(new Integer[]{5, 4, 3, 2, 1});
+
+    // Text area where the customer writes their review.
     private final JTextArea comment = new JTextArea(3, 20);
-    private final JLabel message = Theme.label(" ", Font.PLAIN, 13f, Theme.DANGER);
-    private final JButton submit = Theme.primary("Submit review");
+
+    // Displays messages such as validation errors or success messages.
+    private final JLabel message = new JLabel(" ");
+
+    // Button that submits the customer's review.
+    private final JButton submit = new JButton("Submit review");
+
+
 
     public ReviewPanel() {
+
+        // Uses BorderLayout to divide the screen into regions.
+        // 16 represents the horizontal gap between components.
         setLayout(new BorderLayout(16, 0));
-        setBackground(Theme.BG);
-        setBorder(new EmptyBorder(18, 24, 14, 24));
 
-        add(createProductCard(), BorderLayout.WEST);
-        add(createDetailCard(), BorderLayout.CENTER);
+        // Sets the background colour of the entire panel.
+        setBackground(new Color(0xF3F6F8));
 
-        productList.addListSelectionListener(e -> {
-            if (!e.getValueIsAdjusting()) {
-                loadReviews();
+        // Changes the product title font.
+        productTitle.setFont(new Font(" UI", Font.BOLD, 22));
+
+        // Adds the product selection panel to the WEST.
+        add(createProductPanel(), BorderLayout.WEST);
+
+        // Adds the review details and submission panel to the CENTER.
+        add(createDetailPanel(), BorderLayout.CENTER);
+
+
+        // ListSelectionListener detects when a customer selects
+        // a different product from the JList.
+        productList.addListSelectionListener(
+                new ListSelectionListener() {
+
+                    @Override
+                    public void valueChanged(ListSelectionEvent e) {
+
+                        // Prevents the method from running multiple times
+                        // while the selection is still being adjusted.
+                        if (!e.getValueIsAdjusting()) {
+
+                            // Loads reviews belonging to the selected product.
+                            loadReviews();
+                        }
+                    }
+                });
+
+
+        // ActionListener detects when the submit button is clicked.
+        submit.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent e) {
+
+                // Calls the method responsible for submitting a review.
+                submitReview();
             }
         });
-        submit.addActionListener(e -> submitReview());
 
+        // Retrieves the available products from the backend
+        // when the ReviewPanel is first created.
         loadProducts();
     }
 
-    private JComponent createProductCard() {
-        Theme.RoundedPanel card = new Theme.RoundedPanel(16);
-        card.setLayout(new BorderLayout(0, 8));
-        card.setBorder(new EmptyBorder(14, 14, 14, 14));
-        card.setPreferredSize(new Dimension(300, 10));
-        card.add(Theme.heading("Products"), BorderLayout.NORTH);
 
-        productList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-        productList.setFixedCellHeight(38);
-        productList.setFont(Theme.font(Font.PLAIN, 14f));
-        productList.setCellRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean selected, boolean focus) {
-                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, selected, focus);
-                label.setText(((Product) value).getProductName());
-                label.setBorder(new EmptyBorder(0, 10, 0, 10));
-                label.setBackground(selected ? Theme.PRIMARY_LIGHT : Theme.SURFACE);
-                label.setForeground(Theme.TEXT);
-                return label;
-            }
-        });
-        card.add(Theme.scroll(productList), BorderLayout.CENTER);
-        return card;
+    private JPanel createProductPanel() {
+
+        // Creates a panel using BorderLayout.
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // Sets the preferred width of the product panel to 300 pixels.
+        panel.setPreferredSize(new Dimension(300, 10));
+
+        // Adds a heading at the top of the panel.
+        panel.add(new JLabel("Products"), BorderLayout.NORTH);
+
+        // Allows only one product to be selected at a time.
+        productList.setSelectionMode(
+                ListSelectionModel.SINGLE_SELECTION);
+
+        // JScrollPane adds scrolling functionality to the product list.
+        panel.add(new JScrollPane(productList), BorderLayout.CENTER);
+
+        return panel;
     }
 
-    private JComponent createDetailCard() {
-        Theme.RoundedPanel card = new Theme.RoundedPanel(16);
-        card.setLayout(new BorderLayout(0, 12));
-        card.setBorder(new EmptyBorder(16, 18, 16, 18));
 
+    private JPanel createDetailPanel() {
+
+        JPanel panel = new JPanel(new BorderLayout());
+
+        // GridLayout arranges the product title and summary vertically.
         JPanel head = new JPanel(new GridLayout(0, 1));
-        head.setOpaque(false);
+
+        // Adds the selected product name and its rating summary.
         head.add(productTitle);
         head.add(summary);
-        card.add(head, BorderLayout.NORTH);
 
-        reviewsBox.setLayout(new BoxLayout(reviewsBox, BoxLayout.Y_AXIS));
-        reviewsBox.setOpaque(false);
-        JPanel wrapper = new Theme.ViewportPanel(new BorderLayout());
+        // Places the heading at the top of the detail panel.
+        panel.add(head, BorderLayout.NORTH);
+
+
+        // BoxLayout arranges reviews vertically, one below another.
+        reviewsBox.setLayout(
+                new BoxLayout(reviewsBox, BoxLayout.Y_AXIS));
+
+        // Wrapper holds the reviews inside a BorderLayout.
+        JPanel wrapper = new JPanel(new BorderLayout());
+
+        // Places reviews at the top of the wrapper.
         wrapper.add(reviewsBox, BorderLayout.NORTH);
-        JScrollPane scroll = new JScrollPane(wrapper);
-        scroll.setBorder(BorderFactory.createLineBorder(Theme.BORDER));
-        scroll.getViewport().setOpaque(false);
-        scroll.setOpaque(false);
-        card.add(scroll, BorderLayout.CENTER);
 
-        card.add(createForm(), BorderLayout.SOUTH);
-        return card;
+        // Adds scrolling functionality to the reviews section.
+        JScrollPane scroll = new JScrollPane(wrapper);
+
+        // Prevents horizontal scrolling.
+        scroll.setHorizontalScrollBarPolicy(
+                ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+
+        // Places the reviews section in the centre.
+        panel.add(scroll, BorderLayout.CENTER);
+
+        // Places the review submission form at the bottom.
+        panel.add(createForm(), BorderLayout.SOUTH);
+
+        return panel;
     }
 
+
     private JPanel createForm() {
-        Theme.RoundedPanel form = new Theme.RoundedPanel(12, new Color(0xF8FAFB));
-        form.setLayout(new BorderLayout(0, 8));
-        form.add(Theme.heading("Write a review"), BorderLayout.NORTH);
 
-        JPanel fields = new JPanel(new BorderLayout(10, 8));
-        fields.setOpaque(false);
+        JPanel form = new JPanel(new BorderLayout());
 
-        JPanel ratingRow = new JPanel(new FlowLayout(FlowLayout.LEFT, 8, 0));
-        ratingRow.setOpaque(false);
-        ratingRow.add(Theme.muted("Rating"));
-        rating.setRenderer(new DefaultListCellRenderer() {
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index,
-                                                          boolean selected, boolean focus) {
-                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, selected, focus);
-                label.setText(Theme.stars((Integer) value) + "  " + value);
-                label.setFont(Theme.starFont(Font.PLAIN, 14f));
-                return label;
-            }
-        });
+        // Adds the form heading.
+        form.add(new JLabel("Write a review"), BorderLayout.NORTH);
+
+        JPanel fields = new JPanel(new BorderLayout());
+
+
+        // Creates a row containing the rating label and dropdown.
+        JPanel ratingRow = new JPanel(
+                new FlowLayout(FlowLayout.LEFT));
+
+        ratingRow.add(new JLabel("Rating"));
         ratingRow.add(rating);
+
+        // Places the rating dropdown at the top.
         fields.add(ratingRow, BorderLayout.NORTH);
 
+
+        // Allows long comments to continue on the next line.
         comment.setLineWrap(true);
+
+        // Makes wrapping happen between words instead of characters.
         comment.setWrapStyleWord(true);
-        comment.setFont(Theme.font(Font.PLAIN, 14f));
-        comment.setBorder(new EmptyBorder(6, 8, 6, 8));
+
+        // Adds scrolling to the comment area.
         fields.add(new JScrollPane(comment), BorderLayout.CENTER);
+
+        // Adds the input fields to the form.
         form.add(fields, BorderLayout.CENTER);
 
+
+        // Creates the bottom section containing the message and button.
         JPanel south = new JPanel(new BorderLayout());
-        south.setOpaque(false);
+
+        // Displays success or error messages.
         south.add(message, BorderLayout.CENTER);
+
+        // Places the submit button on the right.
         south.add(submit, BorderLayout.EAST);
+
         form.add(south, BorderLayout.SOUTH);
+
         return form;
     }
 
-    // ---------- loading ----------
 
     private void loadProducts() {
-        Api.async(() -> Api.get("/products", new TypeReference<List<Product>>() {}),
-                products -> {
-                    productModel.clear();
-                    if (products != null) {
-                        for (Product product : products) {
-                            productModel.addElement(product);
+
+        // SwingWorker allows us to perform HTTP requests
+        // without freezing the Swing user interface.
+        //
+        // List<Product> is the data returned by the background task.
+        // Void means we are not publishing intermediate results.
+        SwingWorker<List<Product>, Void> worker =
+                new SwingWorker<List<Product>, Void>() {
+
+                    // doInBackground() executes on a separate background thread.
+                    // This is where we perform the HTTP GET request.
+                    @Override
+                    protected List<Product> doInBackground() throws Exception {
+
+                        // Sends GET /products to the backend.
+                        //
+                        // TypeReference tells Jackson that the JSON response
+                        // should be converted into a List of Product objects.
+                        return Api.get(
+                                "/products",
+                                new TypeReference<List<Product>>() {}
+                        );
+                    }
+
+
+                    // done() executes on the Swing Event Dispatch Thread.
+                    // This is where we safely update Swing components.
+                    @Override
+                    protected void done() {
+
+                        try {
+
+                            // get() retrieves the result returned by doInBackground().
+                            // It also allows us to catch exceptions from the request.
+                            List<Product> loaded = get();
+
+                            // Clears previously loaded products.
+                            products.clear();
+
+                            // Clears previously displayed product names.
+                            productNames.clear();
+
+                            // Checks whether the backend returned products.
+                            if (loaded != null) {
+
+                                // Loops through every Product returned by the API.
+                                for (Product product : loaded) {
+
+                                    // Stores the actual Product object.
+                                    products.add(product);
+
+                                    // Adds its name to the visible JList.
+                                    productNames.addElement(
+                                            product.getProductName());
+                                }
+                            }
+
+                            // If products exist, automatically select the first one.
+                            // This triggers the selection listener and loads its reviews.
+                            if (productNames.size() > 0) {
+                                productList.setSelectedIndex(0);
+                            }
+
+                        } catch (Exception e) {
+
+                            // Displays an error if retrieving products fails.
+                            summary.setText(
+                                    "Could not load products: " + e.getMessage());
                         }
                     }
-                    if (!productModel.isEmpty()) {
-                        productList.setSelectedIndex(0);
-                    }
-                },
-                error -> summary.setText("Could not load products: " + Theme.friendly(error)));
+                };
+
+        // Starts the SwingWorker.
+        worker.execute();
     }
+
 
     private void loadReviews() {
-        Product product = productList.getSelectedValue();
-        if (product == null) {
+
+        // Retrieves the index of the selected product in the JList.
+        int index = productList.getSelectedIndex();
+
+        // -1 means that no product has been selected.
+        if (index == -1) {
             return;
         }
+
+        // Retrieves the actual Product object using the selected index.
+        // This works because products and productNames use the same order.
+        final Product product = products.get(index);
+
+        // Updates the heading to show the selected product.
         productTitle.setText(product.getProductName());
+
+        // Displays a loading message while the request is processing.
         summary.setText("Loading reviews...");
 
-        Api.async(() -> Api.get("/reviews/product/" + product.getProductId(),
-                        new TypeReference<List<Review>>() {}),
-                reviews -> {
-                    List<Review> list = reviews == null ? new ArrayList<>() : reviews;
-                    showReviews(list);
-                },
-                error -> summary.setText("Could not load reviews: " + Theme.friendly(error)));
+
+        // Creates a background task to retrieve product reviews.
+        SwingWorker<List<Review>, Void> worker =
+                new SwingWorker<List<Review>, Void>() {
+
+                    @Override
+                    protected List<Review> doInBackground() throws Exception {
+
+                        // Sends a GET request to:
+                        // /reviews/product/{productId}
+                        //
+                        // The product ID determines which reviews are retrieved.
+                        return Api.get(
+                                "/reviews/product/" + product.getProductId(),
+                                new TypeReference<List<Review>>() {}
+                        );
+                    }
+
+
+                    @Override
+                    protected void done() {
+
+                        try {
+
+                            // Gets the reviews returned by the backend.
+                            List<Review> reviews = get();
+
+                            // Prevents a NullPointerException if the API returns null.
+                            // Instead, we work with an empty list.
+                            if (reviews == null) {
+                                reviews = new ArrayList<Review>();
+                            }
+
+                            // Passes the reviews to the method that displays them.
+                            showReviews(reviews);
+
+                        } catch (Exception e) {
+
+                            // Displays an error if the reviews cannot be retrieved.
+                            summary.setText(
+                                    "Could not load reviews: " + e.getMessage());
+                        }
+                    }
+                };
+
+        // Executes the background request.
+        worker.execute();
     }
 
+
     private void showReviews(List<Review> reviews) {
+
+        // Removes previously displayed reviews.
+        // This prevents reviews from different products mixing together.
         reviewsBox.removeAll();
 
-        if (reviews.isEmpty()) {
+        // Checks whether the selected product has any reviews.
+        if (reviews.size() == 0) {
+
+            // Displays a message when no reviews exist.
             summary.setText("No reviews yet");
-            JLabel none = Theme.muted("Nobody has reviewed this product yet. Be the first!");
-            none.setBorder(new EmptyBorder(16, 16, 16, 16));
-            reviewsBox.add(none);
+
+            reviewsBox.add(
+                    new JLabel(
+                            "Nobody has reviewed this product yet. Be the first!"));
+
         } else {
+
+            // Variable used to calculate the total rating.
             double sum = 0;
+
+            // Loops through every review.
             for (Review review : reviews) {
-                sum += review.getRating();
+
+                // Adds the rating of the current review to the total.
+                sum = sum + review.getRating();
             }
-            summary.setText(String.format("%s  %.1f out of 5  (%d %s)",
-                    Theme.stars((int) Math.round(sum / reviews.size())), sum / reviews.size(),
-                    reviews.size(), reviews.size() == 1 ? "review" : "reviews"));
-            summary.setFont(Theme.starFont(summary.getFont().getStyle(), summary.getFont().getSize2D()));
 
+            // Calculates the average rating.
+            // Example: 15 total stars / 3 reviews = 5.0.
+            double average = sum / reviews.size();
+
+
+            // Converts the average to an integer for displaying stars.
+            // For example, 4.7 becomes 4 stars.
+            //
+            // String.format("%.1f", average) displays one decimal place.
+            summary.setText(
+                    makeStars((int) average) + "  "
+                            + String.format("%.1f", average)
+                            + " out of 5  ("
+                            + reviews.size() + " reviews)"
+            );
+
+
+            // Displays each individual review.
             for (Review review : reviews) {
-                Theme.RoundedPanel item = new Theme.RoundedPanel(12);
-                item.setLayout(new BorderLayout(0, 4));
-                item.setBorder(new EmptyBorder(10, 14, 10, 14));
-                item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
 
-                JPanel line = new JPanel(new BorderLayout());
-                line.setOpaque(false);
-                line.add(Theme.starLabel(Theme.stars(review.getRating()), 15f, Theme.WARN),
-                        BorderLayout.WEST);
-                line.add(Theme.muted(review.getReviewDate() == null ? "" : review.getReviewDate().format(DATE)),
-                        BorderLayout.EAST);
-                item.add(line, BorderLayout.NORTH);
-                item.add(Theme.label(Theme.html(review.getComment(), 420), Font.PLAIN, 14f, Theme.TEXT),
-                        BorderLayout.CENTER);
-
-                reviewsBox.add(item);
-                reviewsBox.add(Box.createVerticalStrut(8));
+                // Creates a panel for the review and adds it to reviewsBox.
+                reviewsBox.add(createReviewItem(review));
             }
         }
+
+        // Tells Swing that the layout needs to be recalculated.
         reviewsBox.revalidate();
+
+        // Repaints the panel so the updated reviews become visible.
         reviewsBox.repaint();
     }
 
-    // ---------- submitting ----------
+
+    private JPanel createReviewItem(Review review) {
+
+        // Creates a panel with BorderLayout.
+        JPanel item = new JPanel(new BorderLayout());
+
+        // Adds a light grey border around the review.
+        item.setBorder(
+                BorderFactory.createLineBorder(Color.LIGHT_GRAY));
+
+        // Prevents the review panel from becoming excessively tall.
+        item.setMaximumSize(new Dimension(Integer.MAX_VALUE, 120));
+
+
+        // Displays the rating as stars at the top.
+        item.add(
+                new JLabel(makeStars(review.getRating())),
+                BorderLayout.NORTH
+        );
+
+
+        // Creates a text area containing the customer's comment.
+        JTextArea text = new JTextArea(review.getComment());
+
+        // Prevents customers from editing reviews belonging to others.
+        text.setEditable(false);
+
+        // Allows long comments to wrap onto multiple lines.
+        text.setLineWrap(true);
+        text.setWrapStyleWord(true);
+
+        // Places the comment in the centre of the review panel.
+        item.add(text, BorderLayout.CENTER);
+
+        return item;
+    }
+
 
     private void submitReview() {
-        Product product = productList.getSelectedValue();
-        if (product == null) {
-            message.setText("Please choose a product first.");
-            return;
-        }
-        String text = comment.getText().trim();
-        if (text.isEmpty()) {
-            message.setText("Please write a short comment.");
-            return;
-        }
-        int stars = (Integer) rating.getSelectedItem();
 
+        // Gets the currently selected product index.
+        int index = productList.getSelectedIndex();
+
+        // A customer must select a product before submitting a review.
+        if (index == -1) {
+
+            message.setForeground(Color.RED);
+            message.setText("Please choose a product first.");
+
+            // Stops execution if no product was selected.
+            return;
+        }
+
+        // Retrieves the actual selected Product object.
+        final Product product = products.get(index);
+
+
+        // Gets the comment and removes unnecessary spaces
+        // at the beginning and end.
+        final String text = comment.getText().trim();
+
+        // Validates that the customer entered a comment.
+        if (text.isEmpty()) {
+
+            message.setForeground(Color.RED);
+            message.setText("Please write a short comment.");
+
+            return;
+        }
+
+
+        // Gets the rating selected from the JComboBox.
+        // The selected Object is converted into an Integer.
+        final int stars = (Integer) rating.getSelectedItem();
+
+
+        // Clears the previous message.
         message.setText(" ");
+
+        // Disables the submit button to prevent multiple submissions
+        // while the HTTP request is still processing.
         submit.setEnabled(false);
 
-        Api.async(() -> {
-            Map<String, Object> body = new LinkedHashMap<>();
-            body.put("customer", Map.of("customerId", Session.customerId()));
-            body.put("product", Map.of("productId", product.getProductId()));
-            body.put("rating", stars);
-            body.put("comment", text);
-            Api.post("/reviews", body);
-            return Boolean.TRUE;
-        }, ok -> {
-            submit.setEnabled(true);
-            comment.setText("");
-            message.setForeground(Theme.SUCCESS);
-            message.setText("Thanks for your review!");
-            loadReviews();
-        }, error -> {
-            submit.setEnabled(true);
-            message.setForeground(Theme.DANGER);
-            message.setText("<html>" + Theme.friendly(error) + "</html>");
-        });
+
+        // Creates a background task for submitting the review.
+        SwingWorker<Void, Void> worker =
+                new SwingWorker<Void, Void>() {
+
+                    @Override
+                    protected Void doInBackground() throws Exception {
+
+                        // Creates a Map representing the customer object.
+                        // The backend expects a customer reference containing
+                        // the customer's ID.
+                        Map<String, Object> customer = new HashMap<>();
+
+                        // Retrieves the currently logged-in customer's ID.
+                        customer.put("customerId", Session.customerId());
+
+
+                        // Creates a Map representing the product object.
+                        Map<String, Object> productMap = new HashMap<>();
+
+                        // Adds the selected product's ID.
+                        productMap.put("productId", product.getProductId());
+
+
+                        // Creates the main request body.
+                        // This will eventually be converted into JSON by Api.send().
+                        Map<String, Object> body = new HashMap<>();
+
+                        // Associates the review with the customer.
+                        body.put("customer", customer);
+
+                        // Associates the review with the selected product.
+                        body.put("product", productMap);
+
+                        // Adds the customer's rating.
+                        body.put("rating", stars);
+
+                        // Adds the customer's written comment.
+                        body.put("comment", text);
+
+
+                        // Sends a POST request to /reviews.
+                        // The backend receives the JSON and creates the review.
+                        Api.send("POST", "/reviews", body);
+
+                        // Void means that this background task does not return
+                        // a meaningful result.
+                        return null;
+                    }
+
+
+                    @Override
+                    protected void done() {
+
+                        // Re-enables the submit button once the request finishes.
+                        submit.setEnabled(true);
+
+                        try {
+
+                            // Checks whether doInBackground() completed successfully.
+                            // If an exception occurred, get() throws it here.
+                            get();
+
+                            // Clears the comment field after successful submission.
+                            comment.setText("");
+
+                            // Displays the success message in green.
+                            message.setForeground(Color.GREEN.darker());
+                            message.setText("Thanks for your review!");
+
+                            // Reloads the reviews so the newly submitted review
+                            // appears immediately on the screen.
+                            loadReviews();
+
+                        } catch (Exception e) {
+
+                            // Displays the error returned by the failed request.
+                            message.setForeground(Color.RED);
+                            message.setText(e.getMessage());
+                        }
+                    }
+                };
+
+        // Starts the review submission background task.
+        worker.execute();
+    }
+
+
+
+    private String makeStars(int count) {
+
+        // Stores the final string of stars.
+        String result = "";
+
+        // Always creates exactly five-star symbols.
+        for (int i = 1; i <= 5; i++) {
+
+            // If the current position is within the rating,
+            // display a filled star.
+            if (i <= count) {
+
+                result = result + "*";
+
+            } else {
+
+                // Otherwise, display an empty star.
+                result = result + "*";
+            }
+        }
+
+        // Returns the completed five-star string.
+        return result;
     }
 }

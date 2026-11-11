@@ -10,7 +10,7 @@ import java.awt.*;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
-/** Sign in with an email address and password, or create a new account. */
+
 public class LoginDialog extends JDialog {
 
     private static final String DEMO_EMAIL = "demo@legendarysprays.co.za";
@@ -157,7 +157,6 @@ public class LoginDialog extends JDialog {
         return panel;
     }
 
-    /** Wraps a tab so that, if the window is made small, it scrolls instead of cutting buttons off. */
     private static JScrollPane scrollable(JPanel panel) {
         JScrollPane scroll = new JScrollPane(panel,
                 ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED,
@@ -195,8 +194,6 @@ public class LoginDialog extends JDialog {
         gbc.weightx = 1;
         panel.add(field, gbc);
     }
-
-    // ---------- actions ----------
 
     private void signIn() {
         String email = signInEmail.getText().trim();

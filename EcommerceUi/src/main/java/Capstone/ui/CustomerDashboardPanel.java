@@ -17,7 +17,6 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 
-/** My Account: profile, spending summary, saved addresses and notifications. */
 public class CustomerDashboardPanel extends JPanel {
 
     private static final DateTimeFormatter STAMP = DateTimeFormatter.ofPattern("d MMM yyyy HH:mm");
@@ -116,7 +115,6 @@ public class CustomerDashboardPanel extends JPanel {
         return card;
     }
 
-    // ---------- loading ----------
 
     private void load() {
         String id = Session.customerId();
